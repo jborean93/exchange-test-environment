@@ -67,7 +67,7 @@
   win_reboot:
   when: pri_exchange_ucma_install.reboot_required
 
-- name: install Exchange {{ man_exchange_version }}
+- name: install Exchange
   win_package:
     path: D:\Setup.EXE
     arguments: >-
@@ -85,6 +85,6 @@
     ansible_become_user: '{{ man_exchange_domain_user }}'
     ansible_become_pass: '{{ man_exchange_domain_pass }}'
 
-- name: reboot after installing Exchange {{ man_exchange_version }}
+- name: reboot after installing Exchange
   win_reboot:
   when: pri_exchange_install is changed

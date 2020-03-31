@@ -33,7 +33,7 @@
   - name: adcs-winrm
     vars:
       man_adcs_winrm_is_dc: yes
-      man_adcs_winrm_issuer: CN=exchange{{ exchange_version }}-DC{{ exchange_version }}-CA, DC={{ man_adcs_winrm_domain.split(".") | join(", DC=") }}
+      man_adcs_winrm_issuer: CN={{ domain_realm.split(".")[0] }}-DC{{ exchange_version }}-CA, DC={{ man_adcs_winrm_domain.split(".") | join(", DC=") }}
 
   post_tasks:
   - name: create local file based on the certificate chain PEM content
@@ -41,7 +41,6 @@
       content: '{{ out_adcs_enrollment_chain_thumbprint }}'
       dest: ca_chain-{{ exchange_version }}.pem
     delegate_to: localhost
-    run_once: yes
 
 - name: connect the other Windows hosts to the domain and setup Exchange
   hosts: domain_children
@@ -54,5 +53,5 @@
   - name: adcs-winrm
     vars:
       man_adcs_winrm_is_dc: no
-      man_adcs_winrm_issuer: CN=exchange{{ exchange_version }}-DC{{ exchange_version }}-CA, DC={{ man_adcs_winrm_domain.split(".") | join(", DC=") }}
+      man_adcs_winrm_issuer: CN={{ domain_realm.split(".")[0] }}-DC{{ exchange_version }}-CA, DC={{ man_adcs_winrm_domain.split(".") | join(", DC=") }}
   - name: exchange

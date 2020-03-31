@@ -4,10 +4,10 @@ all:
       hosts:
         DC2013:
           ansible_host: 192.168.57.10
-          vagrant_box: jborean93/WindowsServer2012R2
+          vagrant_box: jborean93/WindowsServer2019
         DC2016:
           ansible_host: 192.168.58.10
-          vagrant_box: jborean93/WindowsServer2016
+          vagrant_box: jborean93/WindowsServer2019
         DC2019:
           ansible_host: 192.168.59.10
           vagrant_box: jborean93/WindowsServer2019
@@ -30,7 +30,7 @@ all:
         exchange_version: 2013
     env2016:
       hosts:
-        DC2019:
+        DC2016:
         EXCHANGE2016:
       vars:
         exchange_version: 2016
@@ -47,7 +47,7 @@ all:
     ansible_port: 5986
     ansible_psrp_cert_validation: ignore
     ansible_psrp_auth: basic
-    domain_realm: exchange{{ exchange_version }}.test
+    domain_realm: e{{ exchange_version }}.test
 
     # role specific variables
     man_domain_setup_domain_name: '{{ domain_realm | lower }}'
