@@ -1,0 +1,66 @@
+all:
+  children:
+    controller:
+      hosts:
+        DC2013:
+          ansible_host: 192.168.57.10
+          vagrant_box: jborean93/WindowsServer2012R2
+        DC2016:
+          ansible_host: 192.168.58.10
+          vagrant_box: jborean93/WindowsServer2016
+        DC2019:
+          ansible_host: 192.168.59.10
+          vagrant_box: jborean93/WindowsServer2019
+    domain_children:
+      hosts:
+        EXCHANGE2013:
+          ansible_host: 192.168.57.11
+          vagrant_box: jborean93/WindowsServer2012R2
+        EXCHANGE2016:
+          ansible_host: 192.168.58.11
+          vagrant_box: jborean93/WindowsServer2016
+        EXCHANGE2019:
+          ansible_host: 192.168.59.11
+          vagrant_box: jborean93/WindowsServer2019
+    env2013:
+      hosts:
+        DC2013:
+        EXCHANGE2013:
+      vars:
+        exchange_version: 2013
+    env2016:
+      hosts:
+        DC2019:
+        EXCHANGE2016:
+      vars:
+        exchange_version: 2016
+    env2019:
+      hosts:
+        DC2019:
+        EXCHANGE2019:
+      vars:
+        exchange_version: 2019
+  vars:
+    ansible_user: vagrant
+    ansible_password: vagrant
+    ansible_connection: psrp
+    ansible_port: 5986
+    ansible_psrp_cert_validation: ignore
+    ansible_psrp_auth: basic
+    domain_realm: exchange{{ exchange_version }}.test
+
+    # role specific variables
+    man_domain_setup_domain_name: '{{ domain_realm | lower }}'
+    man_domain_setup_safe_mode_password: VagrantPass1
+    man_domain_setup_username: vagrant-domain
+    man_domain_setup_password: VagrantPass1!
+
+    man_domain_join_domain_name: '{{ domain_realm | lower }}'
+    man_domain_join_username: vagrant-domain@{{ domain_realm | upper }}
+    man_domain_join_password: VagrantPass1!
+
+    man_adcs_winrm_domain: '{{ domain_realm | lower }}'
+
+    man_exchange_version: '{{ exchange_version }}'
+    man_exchange_domain_user: vagrant-domain@{{ domain_realm | upper }}
+    man_exchange_domain_pass: VagrantPass1!

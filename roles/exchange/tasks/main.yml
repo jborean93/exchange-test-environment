@@ -1,0 +1,90 @@
+---
+- name: assert mandatory values are set
+  assert:
+    that:
+    - man_exchange_version is defined
+    - man_exchange_domain_user is defined
+    - man_exchange_domain_pass is defined
+
+- name: set baseline Windows features to install
+  set_fact:
+    pri_exchange_features:
+    - NET-WCF-HTTP-Activation45
+    - RPC-over-HTTP-proxy
+    - RSAT-ADDS
+    - RSAT-ADDS-Tools
+    - RSAT-Clustering
+    - RSAT-Clustering-CmdInterface
+    - RSAT-Clustering-Mgmt
+    - RSAT-Clustering-PowerShell
+    - Web-ASP-NET45
+    - Web-Digest-Auth
+    - Web-Dyn-Compression
+    - Web-ISAPI-Ext
+    - Web-Mgmt-Console
+    - Web-Mgmt-Service
+    - Web-Net-Ext45
+    - Web-WMI
+
+- name: add Exchange 2013 specific features
+  set_fact:
+    pri_exchange_features: '{{ pri_exchange_features + ["Server-Media-Foundation", "Web-Lgcy-Mgmt-Console"] }}'
+  when: man_exchange_version | int == 2013
+
+- name: ensure Windows features are present
+  win_feature:
+    name: '{{ pri_exchange_features }}'
+    state: present
+  register: pri_exchange_feature_install
+
+- name: reboot after installing Windows features
+  win_reboot:
+  when: pri_exchange_feature_install.reboot_required
+
+- block:
+  - name: install .NET 4.8 and Visual C++ 2013 redistributable
+    win_chocolatey:
+      name:
+      - netfx-4.8
+      - vcredist2013
+      state: present
+    register: pri_exchange_choco_install
+
+  - name: reboot after installing .NET 4.8 and Visual C++ 2013 redistributable
+    win_reboot:
+    when: pri_exchange_choco_install is changed
+  when: man_exchange_version | int >= 2016
+
+- name: install Unified Communications Managed API 4.0 Runtime
+  win_package:
+    path: https://download.microsoft.com/download/2/C/4/2C47A5C1-A1F3-4843-B9FE-84C0032C61EC/UcmaRuntimeSetup.exe
+    arguments: /q /norestart
+    product_id: UCMA4
+    state: present
+  register: pri_exchange_ucma_install
+
+- name: reboot after installing Unified Communications Managed API 4.0 Runtime
+  win_reboot:
+  when: pri_exchange_ucma_install.reboot_required
+
+- name: install Exchange {{ man_exchange_version }}
+  win_package:
+    path: D:\Setup.EXE
+    arguments: >-
+      /IAcceptExchangeServerLicenseTerms
+      /Mode:Install
+      /Roles:{{ (man_exchange_version | int == 2013) | ternary('ClientAccess,', '') }}Mailbox
+      /DisableAMFiltering
+      /OrganizationName:"Exchange {{ man_exchange_version }}"
+    product_id: '{{ pri_exchange_product_ids[man_exchange_version | int] }}'
+    state: present
+  register: pri_exchange_install
+  become: yes
+  become_method: runas
+  vars:
+    ansible_become_user: '{{ man_exchange_domain_user }}'
+    ansible_become_pass: '{{ man_exchange_domain_pass }}'
+
+- name: reboot after installing Exchange {{ man_exchange_version }}
+  win_reboot:
+  when: pri_exchange_install is changed

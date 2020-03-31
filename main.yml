@@ -1,0 +1,58 @@
+---
+- name: get network adapter information for each host
+  hosts: all
+  gather_facts: no
+  tasks:
+  - name: make absolutely sure the connection is active
+    wait_for_connection:
+
+  - name: get network connection name for private adapter
+    win_shell: |
+      foreach ($instance in (Get-CimInstance -ClassName Win32_NetworkAdapter -Filter "Netenabled='True'")) {
+          $instance_config = Get-CimInstance -ClassName WIn32_NetworkAdapterConfiguration -Filter "Index = '$($instance.Index)'"
+          if ($instance_config.IPAddress -contains "{{ ansible_host }}") {
+              $instance.NetConnectionID
+          }
+      }
+    changed_when: false
+    register: network_connection_name
+
+  - name: fail if we didn't get a network connection name
+    fail:
+      msg: Failed to get the network connection name
+    when: network_connection_name.stdout_lines|count != 1
+
+- name: create Domain Controller and set AD CS
+  hosts: controller
+  gather_facts: no
+  roles:
+  - name: domain-setup
+    vars:
+      man_domain_setup_network_name: '{{ network_connection_name.stdout_lines[0] }}'
+  - name: adcs-enrollment
+  - name: adcs-winrm
+    vars:
+      man_adcs_winrm_is_dc: yes
+      man_adcs_winrm_issuer: CN=exchange{{ exchange_version }}-DC{{ exchange_version }}-CA, DC={{ man_adcs_winrm_domain.split(".") | join(", DC=") }}
+
+  post_tasks:
+  - name: create local file based on the certificate chain PEM content
+    copy:
+      content: '{{ out_adcs_enrollment_chain_thumbprint }}'
+      dest: ca_chain-{{ exchange_version }}.pem
+    delegate_to: localhost
+    run_once: yes
+
+- name: connect the other Windows hosts to the domain and setup Exchange
+  hosts: domain_children
+  gather_facts: no
+  roles:
+  - name: domain-join
+    vars:
+      man_domain_join_network_name: '{{ network_connection_name.stdout_lines[0] }}'
+      man_domain_join_dc_ip: "{{ hostvars['DC' ~ exchange_version].ansible_host }}"
+  - name: adcs-winrm
+    vars:
+      man_adcs_winrm_is_dc: no
+      man_adcs_winrm_issuer: CN=exchange{{ exchange_version }}-DC{{ exchange_version }}-CA, DC={{ man_adcs_winrm_domain.split(".") | join(", DC=") }}
+  - name: exchange

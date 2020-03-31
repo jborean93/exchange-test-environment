@@ -1,0 +1,5 @@
+*.retry
+.vagrant/*
+*.log
+*.DS_Store
+ca_chain-*.pem
