@@ -1,11 +1,13 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# Require YAML module
+require 'open3'
 require 'yaml'
  
 # Read YAML file with box details
 inventory = YAML.load_file('inventory.yml')
+memory = 8196
+cpus = 4
 
 Vagrant.configure("2") do |config|
   inventory['all']['children']['controller']['hosts'].each do |server,details|
@@ -15,8 +17,14 @@ Vagrant.configure("2") do |config|
       dc.vm.network :private_network, ip: details['ansible_host']
 
       dc.vm.provider :libvirt do |v|
-        v.memory = 8196
-        v.cpus = 4
+        v.memory = memory
+        v.cpus = cpus
+      end
+
+      dc.vm.provider :virtualbox do |v|
+        v.name = File.basename(File.dirname(__FILE__)) + '_' + server + '_' + Time.now.to_i.to_s
+        v.memory = memory
+        v.cpus = cpus
       end
     end
   end
@@ -28,9 +36,24 @@ Vagrant.configure("2") do |config|
       srv.vm.network :private_network, ip: details['ansible_host']
 
       srv.vm.provider :libvirt do |v|
-        v.memory = 8196
-        v.cpus = 4
+        v.memory = memory
+        v.cpus = cpus
         v.storage :file, :device => :cdrom, :bus => :sata, :path => ENV[server + '_ISO_PATH']
+      end
+
+      srv.vm.provider :virtualbox do |v|
+        vm_name = File.basename(File.dirname(__FILE__)) + '_' + server + '_' + Time.now.to_i.to_s
+        v.name = vm_name
+        v.memory = memory
+        v.cpus = cpus
+
+        # The VBoxManager storagectl is not idempotent, we need to check if it's already created or not
+        stdout_str, stderr_str, st  = Open3.capture3('VboxManage', 'showvminfo', vm_name, '--machinereadable')
+        storagectl_exists = st.success? || stdout_str =~ /storagecontrollername\d+="ISO"/
+        if not storagectl_exists
+          v.customize ["storagectl", :id, "--name", "ISO", "--add", "sata"]
+          v.customize ["storageattach", :id, "--storagectl", "ISO", "--port", "0", "--device", "0", "--type", "dvddrive", "--medium", ENV[server + '_ISO_PATH']]
+        end
       end
     end
   end

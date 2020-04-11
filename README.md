@@ -11,7 +11,7 @@ The following is required to run any of these steps;
 * [ansible](https://pypi.org/project/ansible/)
 * [pypsrp](https://pypi.org/project/pypsrp/)
 * [vagrant](https://www.vagrantup.com/)
-* [libvirt](https://libvirt.org/)
+* [libvirt](https://libvirt.org/) or [virtualbox](https://www.virtualbox.org/)
 * The Exchange install ISO already downloaded from Microsoft, this is not publicly available and cannot be shared here
 
 These examples use existing Windows Vagrant images for VirtualBox that have been created with the
@@ -34,17 +34,17 @@ From there you can run the following to set up the environment.
 ```bash
 # Set up 2013 environment
 export EXCHANGE2013_ISO_PATH=/var/lib/libvirt/filesystems/fs/mu_exchange_server_2013_with_sp1_x64_dvd_4059293.iso
-vagrant up DC2013 SERVER2013
+vagrant up DC2013 EXCHANGE2013
 ansible-playbook main.yml --limit env2013 -vv
 
 # Set up 2016 environment
 export EXCHANGE2016_ISO_PATH=/var/lib/libvirt/filesystems/fs/mu_exchange_server_2016_cumulative_update_16_x64_dvd_fc6f65ae.iso
-vagrant up DC2016 SERVER2016
+vagrant up DC2016 EXCHANGE2016
 ansible-playbook main.yml --limit env2016 -vv
 
 # Set up 2019 environment
 export EXCHANGE2019_ISO_PATH=/var/lib/libvirt/filesystems/fs/mu_exchange_server_2019_cumulative_update_5_x64_dvd_36df3aaf.iso
-vagrant up DC2019 SERVER2019
+vagrant up DC2019 EXCHANGE2019
 ansible-playbook main.yml --limit env2019 -vv
 
 # Set up all environments - requires each 'EXCHANGE{VERSION}_ISO_PATH' env var to be set
