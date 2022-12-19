@@ -3,7 +3,7 @@
 
 require 'open3'
 require 'yaml'
- 
+
 # Read YAML file with box details
 inventory = YAML.load_file('inventory.yml')
 memory = 8196
@@ -14,7 +14,10 @@ Vagrant.configure("2") do |config|
     config.vm.define server do |dc|
       dc.vm.box = details['vagrant_box']
       dc.vm.hostname = server
-      dc.vm.network :private_network, ip: details['ansible_host']
+      dc.vm.network :private_network,
+        :ip => details['ansible_host'],
+        :libvirt__network_name => 'exchange-test',
+        :libvirt__domain_name => inventory['all']['vars']['domain_realm']
 
       dc.vm.provider :libvirt do |v|
         v.memory = memory
@@ -33,7 +36,10 @@ Vagrant.configure("2") do |config|
     config.vm.define server do |srv|
       srv.vm.box = details['vagrant_box']
       srv.vm.hostname = server
-      srv.vm.network :private_network, ip: details['ansible_host']
+      srv.vm.network :private_network,
+        :ip => details['ansible_host'],
+        :libvirt__network_name => 'exchange-test',
+        :libvirt__domain_name => inventory['all']['vars']['domain_realm']
 
       srv.vm.provider :libvirt do |v|
         v.memory = memory

@@ -4,13 +4,13 @@ all:
       hosts:
         DC2013:
           ansible_host: 192.168.57.10
-          vagrant_box: jborean93/WindowsServer2019
+          vagrant_box: jborean93/WindowsServer2022
         DC2016:
           ansible_host: 192.168.58.10
-          vagrant_box: jborean93/WindowsServer2019
+          vagrant_box: jborean93/WindowsServer2022
         DC2019:
           ansible_host: 192.168.59.10
-          vagrant_box: jborean93/WindowsServer2019
+          vagrant_box: jborean93/WindowsServer2022
     domain_children:
       hosts:
         EXCHANGE2013:

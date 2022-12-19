@@ -55,6 +55,12 @@
     when: pri_exchange_choco_install is changed
   when: man_exchange_version | int >= 2016
 
+- name: install URL IIS Rewrite Module
+  win_chocolatey:
+    name: urlrewrite
+    state: present
+  when: man_exchange_version | int >= 2019
+
 - name: install Unified Communications Managed API 4.0 Runtime
   win_package:
     path: https://download.microsoft.com/download/2/C/4/2C47A5C1-A1F3-4843-B9FE-84C0032C61EC/UcmaRuntimeSetup.exe
@@ -71,7 +77,7 @@
   win_package:
     path: D:\Setup.EXE
     arguments: >-
-      /IAcceptExchangeServerLicenseTerms
+      /IAcceptExchangeServerLicenseTerms{{ (man_exchange_version | int == 2019) | ternary('_DiagnosticDataOFF', '') }}
       /Mode:Install
       /Roles:{{ (man_exchange_version | int == 2013) | ternary('ClientAccess,', '') }}Mailbox
       /DisableAMFiltering
