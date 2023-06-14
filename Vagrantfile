@@ -54,7 +54,7 @@ Vagrant.configure("2") do |config|
         v.cpus = cpus
 
         # The VBoxManager storagectl is not idempotent, we need to check if it's already created or not
-        stdout_str, stderr_str, st  = Open3.capture3('VboxManage', 'showvminfo', vm_name, '--machinereadable')
+        stdout_str, stderr_str, st  = Open3.capture3('VBoxManage', 'showvminfo', vm_name, '--machinereadable')
         storagectl_exists = st.success? || stdout_str =~ /storagecontrollername\d+="ISO"/
         if not storagectl_exists
           v.customize ["storagectl", :id, "--name", "ISO", "--add", "sata"]
